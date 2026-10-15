@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e6e">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tanques">
+<title>Diseño de tanques – NSR-10</title>
+<style>
+:root{--bg:#eef1f2;--sf:#fff;--tx:#1c2529;--mu:#5b6a70;--bd:#c9d2d5;--ac:#0b6e6e;--ok:#1d7a3d;--ko:#b3261e;--wa:#9a6700;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13191b;--sf:#1b2427;--tx:#e6eced;--mu:#93a4a9;--bd:#33444a;--ac:#4fc3c3;--ok:#5bd486;--ko:#ff8a80;--wa:#e8b84a}}
+:root[data-theme="dark"]{--bg:#13191b;--sf:#1b2427;--tx:#e6eced;--mu:#93a4a9;--bd:#33444a;--ac:#4fc3c3;--ok:#5bd486;--ko:#ff8a80;--wa:#e8b84a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:0 0 12px}
+.sub{color:var(--mu);margin:0 0 20px;max-width:70ch}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+label{display:flex;flex-direction:column;font-size:13px;color:var(--mu);gap:4px}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:8px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+button{font:inherit;font-weight:600;background:var(--ac);color:var(--bg);border:0;border-radius:4px;padding:11px 22px;cursor:pointer;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+td:nth-child(2){font-family:"IBM Plex Mono",ui-monospace,monospace;white-space:nowrap}
+.wrap{overflow-x:auto}.ok{color:var(--ok)}.ko{color:var(--ko)}.wa{color:var(--wa)}
+.note{font-size:13px;color:var(--mu)}
+#res{display:none}
+svg{max-width:100%;height:auto;display:block;margin:0 auto 12px}
+.cn{fill:var(--bd)}.wt{fill:#3a9bc4;fill-opacity:.35}.bar{stroke:var(--ko);stroke-width:2.2;fill:none}.dot{fill:var(--ko)}.sl{fill:none;stroke:var(--mu);stroke-width:1}.tx{fill:var(--tx);font-size:12px;paint-order:stroke;stroke:var(--sf);stroke-width:3px}.nf{stroke:#2b7fd0;stroke-dasharray:6 4;stroke-width:1.5}
+.lg{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13px;color:var(--mu)}.lg b{color:var(--ko)}
+</style>
+</head>
+<body>
+<main>
+<h1>Diseño estructural de tanques</h1>
+<p class="sub">Tanque rectangular en concreto reforzado. Cálculo preliminar según NSR-10 (Títulos B, C, H) y criterios de ACI 350 para estructuras de contención de líquidos.</p>
+
+<div class="card" id="inst" style="display:none"><b>Instale la aplicación</b>
+<p class="note" id="instTxt" style="margin:4px 0 0">Funciona sin internet y se abre como cualquier otra app.</p>
+<button id="btnInst" style="display:none">Instalar en este dispositivo</button></div>
+<div class="card">
+<h2>Datos de entrada</h2>
+<div class="grid">
+<label>Ubicación del tanque<select id="tipo"><option value="enterrado">Enterrado</option><option value="superficial">Superficial</option></select></label>
+<label>Cubierta<select id="cub"><option value="cerrado">Cerrado (con tapa)</option><option value="abierto">Abierto</option></select></label>
+<label>Nivel freático, profundidad desde la superficie (m) — vacío = no existe<input id="nf" type="number" step="0.1" min="0" placeholder="Sin nivel freático"></label>
+<label>Volumen útil (m³)<input id="V" type="number" value="100" min="1"></label>
+<label>Altura libre interior de agua (m)<input id="H" type="number" value="3.5" step="0.1" min="1"></label>
+<label>Relación largo / ancho<input id="r" type="number" value="1.5" step="0.1" min="1"></label>
+<label>Recubrimiento de tierra sobre la tapa (m)<input id="Hc" type="number" value="0.5" step="0.1" min="0"></label>
+<label>Sobrecarga sobre el terreno / tapa (kN/m²)<input id="qs" type="number" value="10" min="0"></label>
+<label>f'c (MPa)<input id="fc" type="number" value="28"></label>
+<label>fy (MPa)<input id="fy" type="number" value="420"></label>
+<label>Peso unitario del suelo γs (kN/m³)<input id="gs" type="number" value="18" step="0.5"></label>
+<label>Ángulo de fricción φ (°)<input id="phi" type="number" value="30"></label>
+<label>Capacidad portante admisible (kPa)<input id="qa" type="number" value="150"></label>
+<label>Aa (NSR-10 A.2)<input id="Aa" type="number" value="0.15" step="0.01"></label>
+<label>Fa<input id="Fa" type="number" value="1.2" step="0.05"></label>
+<label>Coef. de importancia I<select id="I"><option value="1.5">1.50 (Grupo IV)</option><option value="1.25">1.25 (Grupo III)</option><option value="1.1">1.10 (Grupo II)</option></select></label>
+</div>
+<button id="go">Calcular y diseñar</button>
+</div>
+
+<div id="res">
+<div class="card" id="c_chk"><h2>Verificación normativa y ajuste de dimensiones</h2><div class="wrap"><table id="t_chk"></table></div>
+<p class="note">Si algún punto no cumple, modifique las dimensiones aquí (vacío = automático) o use el ajuste automático. Para cambiar volumen, altura o relación L/B use los datos de entrada.</p>
+<div class="grid"><label>Espesor de muros (m)<input id="eM" type="number" step="0.05" min="0.15"></label><label>Espesor losa de fondo (m)<input id="eF" type="number" step="0.05" min="0.15"></label><label>Espesor de tapa (m)<input id="eT" type="number" step="0.05" min="0.10"></label><label>Voladizo de la losa de fondo (m)<input id="vo" type="number" step="0.25" min="0" value="0"></label></div>
+<button id="re" style="margin-right:8px">Recalcular con estos valores</button><button id="auto">Ajustar automáticamente lo que no cumple</button><p class="note" id="msg"></p></div>
+<div class="card"><h2>Geometría</h2><div class="wrap"><table id="t_geo"></table></div></div>
+<div class="card"><h2>Muros</h2><div class="wrap"><table id="t_wall"></table></div></div>
+<div class="card" id="c_roof"><h2>Losa de tapa</h2><div class="wrap"><table id="t_roof"></table></div></div>
+<div class="card"><h2>Losa de fondo, estabilidad y capacidad portante</h2><div class="wrap"><table id="t_base"></table></div></div>
+<div class="card"><h2>Sismo</h2><div class="wrap"><table id="t_sis"></table></div></div>
+<div class="card"><h2>Esquema del tanque y disposición del acero</h2><div id="dibujo"></div></div>
+<div class="card"><h2>Alcances y verificaciones pendientes</h2>
+<p class="note">Resultado preliminar para predimensionamiento; debe ser revisado y firmado por un ingeniero civil / estructural con matrícula profesional (Ley 400 de 1997). No incluye: tensión directa horizontal en muros por empuje del agua, control de fisuración (ACI 350 §10.6), juntas, presión sísmica del suelo (Mononobe-Okabe), oleaje (sloshing) completo, ni análisis de borde muro–losa por elementos finitos. Los factores de carga usados son 1.4 para fluido, 1.6 para empuje de suelo, 1.2D+1.6L para la tapa, y un factor de durabilidad Sd = 1.3 en flexión (ACI 350). El factor de seguridad a flotación se compara con 1.10; confirme el valor exigido por su estudio geotécnico (NSR-10 Título H).</p></div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const GW=9.81,GC=24,SD=1.3;
+const BARS=[["#4",129],["#5",199],["#6",284],["#7",387]];
+const f=(x,n=2)=>Number(x).toFixed(n);
+const rows=(id,a)=>$(id).innerHTML=a.map(r=>`<tr><td>${r[0]}</td><td class="${r[3]||''}">${r[1]}</td><td class="note">${r[2]||''}</td></tr>`).join('');
+const chk=(c,t='Cumple',n='No cumple')=>c?[t,'ok']:[n,'ko'];
+
+function asReq(Mu,d,fc,fy){ // Mu kN·m/m, d m -> mm²/m
+  const Rn=Mu/(0.9*d*d)/1000, q=1-2*Rn/(0.85*fc);
+  if(q<0)return null;
+  const rho=Math.max(0.85*fc/fy*(1-Math.sqrt(q)),1.4/fy);
+  return rho*1000*d*1000;
+}
+function phiVc(d,fc){return 0.75*0.17*Math.sqrt(fc)*d*1000;} // kN/m
+function bar(As){
+  if(!(As>0))return "Insuficiente: aumentar espesor";
+  for(const [n,a] of BARS){
+    let s=a/As*1000; if(s>=100){s=Math.min(300,Math.floor(s/25)*25);return `${n} @ ${f(s/1000)} m`;}
+  }
+  return "Revisar (#7 @ 0.10 m insuficiente)";
+}
+function pSuelo(z,K,gs,nf,qs){
+  const gp=gs-GW;
+  const sub=Math.max(0,z-nf);
+  return K*(gs*Math.min(z,nf)+gp*sub+qs)+GW*sub;
+}
+
+function run(){
+  const g=id=>parseFloat($(id).value);
+  const ent=$('tipo').value==='enterrado', cer=$('cub').value==='cerrado';
+  const V=g('V'),H=g('H'),r=g('r'),fc=g('fc'),fy=g('fy'),gs=g('gs'),phi=g('phi'),qa=g('qa'),qs=g('qs');
+  const Aa=g('Aa'),Fa=g('Fa'),I=g('I');
+  const nf=$('nf').value===''?1e6:g('nf');
+  const Hc=(ent&&cer)?g('Hc'):0;
+  const B=Math.sqrt(V/(H*r)),L=B*r;
+  const Ka=Math.pow(Math.tan((45-phi/2)*Math.PI/180),2),K0=1-Math.sin(phi*Math.PI/180);
+  const K=cer?K0:Ka;
+  const z0=Hc,z1=Hc+H;
+
+  // ---- Muro: iteración de espesor
+  const eMin=Math.max(0.20,Math.ceil(H/12*20)/20),mw=parseFloat($('eM').value)>0;let e=mw?parseFloat($('eM').value):eMin,W=null;
+  for(;e<=1.0+1e-9;e+=0.05){
+    const d=e-0.05-0.008;
+    // Caso A: tanque lleno, sin suelo exterior
+    const w0=GW*H;
+    const MA=cer?w0*H*H/15:w0*H*H/6, VA=cer?0.4*w0*H:w0*H/2;
+    const MpA=cer?w0*H*H/33.6:0;
+    // Caso B: tanque vacío, empuje de suelo + agua freática + sobrecarga
+    let MB=0,VB=0,MpB=0,p0=0,p1=0;
+    if(ent){
+      p0=pSuelo(z0,K,gs,nf,qs);p1=pSuelo(z1,K,gs,nf,qs);
+      if(cer){MB=p0*H*H/8+(p1-p0)*H*H/15;VB=0.625*p0*H+0.4*(p1-p0)*H;MpB=p0*H*H/14.2+(p1-p0)*H*H/33.6;}
+      else{MB=p0*H*H/2+(p1-p0)*H*H/6;VB=p0*H+(p1-p0)*H/2;}
+    }
+    const Mu=Math.max(1.4*MA*SD,1.6*MB*SD), Vu=Math.max(1.4*VA,1.6*VB);
+    const MuP=Math.max(1.4*MpA*SD,1.6*MpB*SD);
+    const As=asReq(Mu,d,fc,fy), AsP=asReq(Math.max(MuP,0.01),d,fc,fy);
+    if(mw||(As&&Vu<=phiVc(d,fc))){W={ok:!!As&&Vu<=phiVc(d,fc),e,d,MA,MB,Mu,Vu,As,AsP,p0,p1,VA,VB,gov:(1.4*MA>=1.6*MB)?'tanque lleno':'tanque vacío (suelo + freático)'};break;}
+  }
+  if(!W){alert('No se logró un espesor de muro ≤ 1.00 m. Revise los datos.');return;}
+  e=W.e;
+  const Ah=0.003*e*1e6/2; // por cara (mm²/m)
+
+  // ---- Tapa
+  let hr=0,R=null;
+  if(cer){
+    const qv=ent?qs:1.0;
+    const mt=parseFloat($('eT').value)>0;
+    for(hr=mt?parseFloat($('eT').value):Math.max(0.15,Math.ceil(B/20*20)/20);hr<=0.6+1e-9;hr+=0.05){
+      const d=hr-0.04-0.008, wu=1.2*(GC*hr+gs*Hc)+1.6*qv;
+      const M=wu*B*B/8*SD, Vu=wu*B/2, As=asReq(M,d,fc,fy);
+      if(mt||(As&&Vu<=phiVc(d,fc))){R={ok:!!As&&Vu<=phiVc(d,fc),wu,M,Vu,As,d};break;}
+    }
+  }
+
+  // ---- Fondo, pesos, flotación
+  const Lx=L+2*e,Bx=B+2*e,Ab=Lx*Bx;
+  const Wmuros=GC*(Ab-L*B)*H, Wtapa=cer?GC*Ab*hr:0, Wsuelo=cer?gs*Hc*Ab:0, Wagua=GW*L*B*H;
+  let ef=Math.max(e,0.20),F=null,Hu=0,Fs=null,U=0,Wres=0,wnet=0;
+  const mf=parseFloat($('eF').value)>0;if(mf)ef=parseFloat($('eF').value);
+  for(;ef<=1.0+1e-9;ef+=0.05){
+    const zb=Hc+H+ef; Hu=Math.max(0,zb-nf);
+    wnet=Math.max(0,GW*Hu-GC*ef);
+    const d=ef-0.075-0.008;
+    const M=Math.max(wnet*B*B/12*1.4*SD,0.01),Vu=1.4*wnet*B/2,As=asReq(M,d,fc,fy);
+    if(mf||(As&&Vu<=phiVc(d,fc))){F={ok:!!As&&Vu<=phiVc(d,fc),d,M,Vu,As};break;}
+  }
+  const vo=Math.max(0,parseFloat($('vo').value)||0),Ab2=(Lx+2*vo)*(Bx+2*vo),hs=Hc+(cer?hr:0)+H;
+  const Wvo=(Ab2-Ab)*(GC*ef+(ent?gs*Math.min(hs,nf)+(gs-GW)*Math.max(0,hs-nf):0));
+  const Wbase=GC*Ab*ef, Wvacio=Wmuros+Wtapa+Wsuelo+Wbase+Wvo;
+  U=GW*Hu*Ab2; Wres=Wvacio;
+  Fs=U>0?Wres/U:null;
+  const Wtot=Wvacio+Wagua, qb=(Wtot-U*0)/Ab2; // lleno: se desprecia subpresión (condición crítica de apoyo)
+  const qnet=ent&&Hu>0?(Wtot-GW*Hu*Ab2)/Ab2:qb;
+
+  // ---- Sismo (Housner simplificado, solo en superficial)
+  const Sa=2.5*Aa*Fa*I, lam=0.866*L/H, Wi=Wagua*Math.tanh(lam)/lam, Rr=2.0;
+  const Vs=Sa*(Wi+Wmuros+Wtapa)/Rr;
+  const mu=Math.tan(2/3*phi*Math.PI/180), fsd=mu*Wtot/Vs;
+
+  // ---- Salida
+  rows('t_geo',[
+    ['Largo × ancho interior',`${f(L)} × ${f(B)} m`,`Volumen ${f(L*B*H)} m³`],
+    ['Altura de agua',`${f(H)} m`],
+    ['Tipo',`${ent?'Enterrado':'Superficial'} / ${cer?'cerrado':'abierto'}`,nf>1e5?'Sin nivel freático':`NF a ${f(nf)} m de la superficie`],
+    ['Ka / K0 (Rankine)',`${f(Ka,3)} / ${f(K0,3)}`,`Se usa ${cer?'K0 (muro apoyado en tapa)':'Ka (muro en voladizo)'}`]]);
+  rows('t_wall',[
+    ['Espesor del muro',`${f(e)} m`,'Mínimo por flexión y cortante (φVc, C.11)'],
+    ['Condición de apoyo',cer?'Empotrado base – articulado tapa':'Voladizo empotrado en base',''],
+    ['Caso crítico',W.gov,''],
+    ['Presión del agua en la base (tanque lleno)',`${f(GW*H,1)} kPa`,'γw·H, distribución triangular'],
+    ...(ent?[['Presión suelo + agua freática + sobrecarga, tope / base',`${f(W.p0,1)} / ${f(W.p1,1)} kPa`,'Tanque vacío'],['Suelo seco / sumergido',nf>=Hc+H?'Todo seco':nf<=Hc?'Todo sumergido':`Seco hasta ${f(nf)} m`,`Sumergido: γ′ = ${f(gs-GW,1)} kN/m³ + presión del agua`]]:[]),
+    ['Mu de diseño (incl. Sd)',`${f(W.Mu,1)} kN·m/m`,`Mservicio lleno ${f(W.MA,1)} · vacío ${f(W.MB,1)}`],
+    ['Vu / φVc',`${f(W.Vu,1)} / ${f(phiVc(W.d,fc),1)} kN/m`,'',...chk(W.Vu<=phiVc(W.d,fc))],
+    ['Acero vertical en la base',`${bar(W.As)}`,`As = ${f(W.As,0)} mm²/m, cara de tensión`],
+    ...(cer?[['Acero vertical en el vano',`${bar(W.AsP)}`,`As = ${f(W.AsP,0)} mm²/m`]]:[]),
+    ['Acero horizontal',`${bar(Ah)} c/cara`,'ρ = 0.003 (retracción y temperatura)'],
+    ['Recubrimiento',`5.0 cm`,'Cara en contacto con agua o suelo']]);
+  $('c_roof').style.display=cer?'':'none';
+  if(cer&&R)rows('t_roof',[
+    ['Espesor de tapa',`${f(hr)} m`,'Losa en una dirección, apoyo simple (conservador)'],
+    ['wu',`${f(R.wu,1)} kN/m²`,`1.2D + 1.6L${ent?`, incl. ${f(Hc)} m de tierra`:''}`],
+    ['Mu',`${f(R.M,1)} kN·m/m`],
+    ['Acero principal',bar(R.As),`As = ${f(R.As,0)} mm²/m`],
+    ['Acero de repartición',bar(0.0018*1000*hr*1000/1)+' (retracción)','ρ = 0.0018 (C.7.12)']]);
+  const fl=Fs===null?['No hay flotación (fondo sobre el nivel freático)','ok']:chk(Fs>=1.1,`Fs = ${f(Fs)} ≥ 1.10`,`Fs = ${f(Fs)} < 1.10: aumentar peso, voladizo de fondo o anclajes`);
+  rows('t_base',[
+    ['Espesor de losa de fondo',`${f(ef)} m`],
+    ['Subpresión (tanque vacío)',`${f(U,1)} kN`,`Columna de agua bajo la base: ${f(Hu)} m`],
+    ['Peso resistente (vacío)',`${f(Wvacio,1)} kN`,'Se desprecia fricción lateral'],
+    ['Seguridad a flotación',fl[0],'',fl[1]],
+    ['Acero losa de fondo (ambas direcciones, cara superior/inferior)',F?bar(Math.max(F.As,0.0033*1000*(ef-0.083)*1000)):'—',`Mu = ${F?f(F.M,1):'—'} kN·m/m`],
+    ['Presión sobre el suelo, tanque lleno',`${f(qnet,1)} kPa`,`Admisible ${f(qa,0)} kPa`,...chk(qnet<=qa)]]);
+  rows('t_sis',[
+    ['Sa = 2.5·Aa·Fa·I',`${f(Sa,3)} g`,'NSR-10 A.2'],
+    ['Masa impulsiva (Housner)',`${f(Wi,0)} kN`,`Wi/Wagua = ${f(Wi/Wagua)}`],
+    ['Cortante basal V = Sa(Wi+Wc)/R',ent?'—':`${f(Vs,0)} kN`,ent?'Enterrado: gobierna el empuje sísmico del suelo; verificar Mononobe-Okabe (NSR-10 Título H)':`R = 2.0 (supuesto)`],
+    ...(ent?[]:[['Deslizamiento',`FS = ${f(fsd)}`,'μ = tan(2φ/3)',...chk(fsd>=1.5)]])]);
+  const bf=bar(Math.max(F?F.As:0,0.0033*1000*(ef-0.083)*1000));
+  const bad=t=>/Insuficiente|Revisar/.test(t);
+  const chks=[
+    ['Muro: flexión y cortante (C.10, C.11)',W.ok&&!bad(bar(W.As)),`e = ${f(e)} m`],
+    ['Muro: espesor mínimo (≥ H/12 y ≥ 0.20 m)',e>=eMin-1e-9,`mínimo ${f(eMin)} m`],
+    ...(cer?[['Tapa: flexión y cortante',!!R&&R.ok,`h = ${f(hr)} m`],['Tapa: espesor mínimo (h ≥ B/20, C.9.5.2.1)',hr>=B/20-1e-9,`mínimo ${f(B/20)} m`]]:[]),
+    ['Losa de fondo: flexión y cortante',!!F&&F.ok,`ef = ${f(ef)} m`],
+    ['Flotación (Fs ≥ 1.10)',Fs===null||Fs>=1.1,Fs===null?'No aplica':`Fs = ${f(Fs)}`],
+    ['Capacidad portante',qnet<=qa,`${f(qnet,1)} / ${f(qa,0)} kPa`],
+    ...(!ent?[['Deslizamiento (FS ≥ 1.5)',fsd>=1.5,`FS = ${f(fsd)}`]]:[])];
+  rows('t_chk',chks.map(c=>[c[0],c[1]?'Cumple':'No cumple',c[2],c[1]?'ok':'ko']));
+  window.LASTEF=ef;
+  dibujar({ent,cer,L,B,H,e,ef,hr,Hc,nf,K,gs,qs,vo,bv:bar(W.As),bvp:cer?bar(W.AsP):'',bh:bar(Ah),bf,br:(cer&&R)?bar(R.As):''});
+  $('res').style.display='block';
+  if(!QUIET)$('res').scrollIntoView({behavior:'smooth'});
+  return chks;
+}
+function presiones(d){
+  const {ent,cer,H,Hc,nf,K,gs,qs}=d,z0=ent?Hc:0,z1=z0+H;
+  const Y=50,hh=Math.min(260,H*80),s=hh/H,y=z=>Y+(z-z0)*s;
+  const pe=z=>K*(gs*Math.min(z,nf)+(gs-GW)*Math.max(0,z-nf)+qs),wf=z=>GW*Math.max(0,z-nf);
+  const pa=GW*H,pb=ent?pe(z1)+wf(z1):0,pt=ent?pe(z0)+wf(z0):0,k=210/Math.max(pa,pb,1);
+  let g=`<defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" style="fill:var(--mu)"/></marker></defs>`;
+  // A: agua (cara interior)
+  g+=`<text class="tx" x="20" y="${Y-24}">A. Tanque lleno: empuje del agua</text>`;
+  g+=`<rect class="cn" x="56" y="${Y-10}" width="14" height="${hh+30}"/><path class="wt" d="M70 ${Y}L${70+k*pa} ${Y+hh}L70 ${Y+hh}Z" style="stroke:#2b7fd0"/>`;
+  for(let i=1;i<=5;i++){const yy=Y+hh*i/5;g+=`<line x1="${70+k*pa*i/5}" y1="${yy}" x2="74" y2="${yy}" class="sl" marker-end="url(#ar)"/>`;}
+  g+=`<text class="tx" x="${70+k*pa+6}" y="${Y+hh-4}">${f(pa,1)} kPa</text><text class="tx" x="76" y="${Y-6}">0 kPa (nivel del agua)</text>`;
+  if(ent){
+    const ox=380,xw=ox+230;
+    g+=`<text class="tx" x="${ox}" y="${Y-24}">B. Tanque vacío: suelo, sobrecarga y freático</text>`;
+    g+=`<rect class="cn" x="${xw}" y="${Y-10}" width="14" height="${hh+30}"/>`;
+    const zs=[z0].concat(nf>z0&&nf<z1?[nf]:[],[z1]);
+    const A=zs.map(z=>`${xw-k*pe(z)},${y(z)}`),Bw=zs.map(z=>`${xw-k*(pe(z)+wf(z))},${y(z)}`);
+    for(let i=0;i<zs.length-1;i++){const sub=(zs[i]+zs[i+1])/2>nf;g+=`<path d="M${xw},${y(zs[i])}L${A[i]}L${A[i+1]}L${xw},${y(zs[i+1])}Z" style="${sub?'fill:#7a5c3e;fill-opacity:.5;stroke:#7a5c3e':'fill:var(--wa);fill-opacity:.3;stroke:var(--wa)'}"/>`;}
+    g+=`<path class="wt" d="M${A.join('L')}L${Bw.slice().reverse().join('L')}Z" style="stroke:#2b7fd0"/>`;
+    for(let i=0;i<=5;i++){const z=z0+H*i/5,yy=y(z);g+=`<line x1="${xw-k*(pe(z)+wf(z))}" y1="${yy}" x2="${xw-2}" y2="${yy}" class="sl" marker-end="url(#ar)"/>`;}
+    if(nf>z0&&nf<z1)g+=`<line class="nf" x1="${xw-k*pb-10}" x2="${xw+14}" y1="${y(nf)}" y2="${y(nf)}"/><text class="tx" x="${xw-k*pb-10}" y="${y(nf)-4}" style="fill:#2b7fd0">N.F.</text>`;
+    g+=`<text class="tx" x="${xw+22}" y="${y(z0)+12}">Tope: ${f(pt,1)} kPa</text><text class="tx" x="${xw+22}" y="${y(z1)-18}">Base: ${f(pb,1)} kPa</text><text class="tx" x="${xw+22}" y="${y(z1)-3}">(suelo ${f(pe(z1),1)} + agua ${f(wf(z1),1)})</text>`;
+    g+=`<text class="tx" x="${ox}" y="${Y+hh+40}">K = ${f(K,3)} (${cer?'reposo':'activo'}), γs = ${f(gs,1)} kN/m³, sobrecarga ${f(qs,1)} kPa.</text>`;
+    const lgd=[];if(nf>z0)lgd.push(['fill:var(--wa);fill-opacity:.3;stroke:var(--wa)',`Suelo seco (γs = ${f(gs,1)} kN/m³)`]);if(nf<z1)lgd.push(['fill:#7a5c3e;fill-opacity:.5;stroke:#7a5c3e',`Suelo sumergido (γ′ = γs − γw = ${f(gs-GW,1)} kN/m³)`],['fill:#3a9bc4;fill-opacity:.35;stroke:#2b7fd0','Agua freática (γw·h sobre el N.F.)']);
+    lgd.forEach((t,i)=>g+=`<rect x="${ox}" y="${Y+hh+48+i*16}" width="12" height="10" style="${t[0]}"/><text class="tx" x="${ox+18}" y="${Y+hh+57+i*16}">${t[1]}</text>`);
+  }else g+=`<text class="tx" x="20" y="${Y+hh+40}">Tanque superficial: no hay empuje de suelo sobre los muros.</text>`;
+  g+=`<text class="tx" x="20" y="${Y+hh+58+(ent?48:0)}">Pared analizada: franja vertical de 1 m de ancho, válida para cualquiera de los 4 muros.</text><text class="tx" x="20" y="${Y+hh+74+(ent?48:0)}">El cálculo no distingue muro largo de corto: usa la misma presión y el mismo diseño en todos.</text>`;
+  return `<svg viewBox="0 0 ${ent?800:380} ${Y+hh+84+(ent?48:0)}" role="img" aria-label="Presiones sobre los muros">${g}</svg>`;
+}
+const sp=t=>{const m=/@ ([\d.]+)/.exec(t||'');return m?parseFloat(m[1]):0.2};
+function dibujar(d){
+  const {ent,cer,L,B,H,e,ef,hr,Hc,nf}=d,Lx=L+2*e,Bx=B+2*e;
+  const top=cer?hr:0,cov=ent?Hc:0,tot=cov+top+H+ef;
+  const s=Math.min(480/Lx,290/tot),X=110,Y=50,p=m=>m*s,y=m=>Y+m*s,c=p(0.05);
+  const xl=X,xr=X+p(Lx),yT=y(cov),yI=yT+p(top),yB0=yI+p(H),yB=yB0+p(ef);
+  let g=`<defs><pattern id="ht" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" class="sl" style="opacity:.5"/></pattern></defs>`;
+  if(ent){
+    g+=`<rect x="${X-70}" y="${y(0)}" width="${p(Lx)+140}" height="${yB-y(0)+20}" fill="url(#ht)"/>`;
+    g+=`<line x1="${X-70}" x2="${xr+70}" y1="${y(0)}" y2="${y(0)}" class="sl" style="stroke-width:2"/><text x="${X-70}" y="${y(0)-8}" class="tx">Superficie del terreno</text>`;
+    if(nf<tot){g+=`<rect x="${X-70}" y="${y(nf)}" width="${p(Lx)+140}" height="${yB-y(nf)+20}" class="wt" style="fill-opacity:.25"/>`;if(p(nf)>24)g+=`<text class="tx" x="${X-68}" y="${y(nf/2)}">Suelo seco</text>`;g+=`<text class="tx" x="${X-68}" y="${(y(nf)+yB)/2}">Sumergido</text>`;}
+    if(nf<tot)g+=`<line x1="${X-70}" x2="${xr+70}" y1="${y(nf)}" y2="${y(nf)}" class="nf"/><text x="${X-70}" y="${y(nf)-5}" class="tx" style="fill:#2b7fd0">N.F. a ${f(nf)} m</text>`;
+  }else{
+    g+=`<rect x="${X-70}" y="${yB}" width="${p(Lx)+140}" height="20" fill="url(#ht)"/><line x1="${X-70}" x2="${xr+70}" y1="${yB}" y2="${yB}" class="sl" style="stroke-width:2"/><text x="${X-70}" y="${yB+34}" class="tx">Terreno</text>`;
+  }
+  g+=`<rect class="cn" x="${xl}" y="${yT}" width="${p(Lx)}" height="${yB-yT}"/>`;
+  if(d.vo>0){const ex=Math.min(p(d.vo),100);g+=`<rect class="cn" x="${xl-ex}" y="${yB0}" width="${p(Lx)+2*ex}" height="${yB-yB0}"/>`;}
+  g+=`<rect x="${xl+p(e)}" y="${yI}" width="${p(L)}" height="${p(H)}" style="fill:var(--sf)"/><rect class="wt" x="${xl+p(e)}" y="${yI}" width="${p(L)}" height="${p(H)}"/>`;
+  g+=`<text class="tx" x="${(xl+xr)/2-12}" y="${(yI+yB0)/2}">Agua</text>`;
+  // acero
+  const xi1=xl+p(e)-c,xo1=xl+c,xi2=xr-p(e)+c,xo2=xr-c,h=p(0.5),yw=yT+c;
+  g+=`<path class="bar" d="M${xi1} ${yw}V${yB-c}h${h}M${xo1} ${yw}V${yB0+c}h${h}M${xi2} ${yw}V${yB-c}h${-h}M${xo2} ${yw}V${yB0+c}h${-h}"/>`;
+  const sh=Math.max(p(sp(d.bh)),5);
+  for(let yy=yI+sh/2;yy<yB0-c;yy+=sh)[xi1,xo1,xi2,xo2].forEach(x=>g+=`<circle class="dot" cx="${x}" cy="${yy}" r="2.3"/>`);
+  const mat=(ya,yb,t)=>{g+=`<path class="bar" d="M${xl+c} ${ya}H${xr-c}"/>`;const st=Math.max(p(sp(t)),6);for(let x=xl+c+st/2;x<xr-c;x+=st)g+=`<circle class="dot" cx="${x}" cy="${yb}" r="2"/>`;};
+  mat(yB0+c,yB0+c+5,d.bf);mat(yB-c,yB-c-5,d.bf);
+  if(cer&&d.br){mat(yT+c,yT+c+5,d.br);mat(yI-c,yI-c-5,d.br);}
+  const dx=xr+14;let dy=yT+14;
+  [`H = ${f(H)} m`,`e = ${f(e)} m`,`ef = ${f(ef)} m`].concat(cer?[`hr = ${f(hr)} m`]:[]).forEach(t=>{g+=`<text class="tx" x="${dx}" y="${dy}">${t}</text>`;dy+=16;});
+  g+=`<text class="tx" x="${xl}" y="${yB+34}" style="${ent?'':'display:none'}">Corte A-A (cruza los muros cortos), L interior = ${f(L)} m</text>`;
+  if(!ent)g+=`<text class="tx" x="${xl}" y="${Y-14}">Corte A-A (cruza los muros cortos), L interior = ${f(L)} m</text>`;
+  const svg1=`<svg viewBox="0 0 ${xr+110} ${yB+60}" role="img" aria-label="Corte del tanque con refuerzo">${g}</svg>`;
+  // planta
+  const sc=Math.min(480/Lx,300/Bx),pw=sc*Lx,ph=sc*Bx,ox=40,oy=30,cc=sc*0.05,ee=sc*e;
+  let q=`<rect class="cn" x="${ox}" y="${oy}" width="${pw}" height="${ph}"/><rect x="${ox+ee}" y="${oy+ee}" width="${pw-2*ee}" height="${ph-2*ee}" style="fill:var(--sf)"/>`;
+  const st=Math.max(sc*sp(d.bf),4);
+  for(let x=ox+ee+st/2;x<ox+pw-ee;x+=st)q+=`<line x1="${x}" x2="${x}" y1="${oy+ee}" y2="${oy+ph-ee}" class="bar" style="stroke-width:.8;opacity:.8"/>`;
+  for(let yy=oy+ee+st/2;yy<oy+ph-ee;yy+=st)q+=`<line y1="${yy}" y2="${yy}" x1="${ox+ee}" x2="${ox+pw-ee}" class="bar" style="stroke-width:.8;opacity:.8"/>`;
+  q+=`<rect class="bar" x="${ox+cc}" y="${oy+cc}" width="${pw-2*cc}" height="${ph-2*cc}" style="stroke-width:1.6"/><rect class="bar" x="${ox+ee-cc}" y="${oy+ee-cc}" width="${pw-2*ee+2*cc}" height="${ph-2*ee+2*cc}" style="stroke-width:1.6"/>`;
+  const ay=oy+ph/2;
+  q+=`<line x1="${ox-14}" x2="${ox+pw+14}" y1="${ay}" y2="${ay}" class="nf" style="stroke:var(--tx)"/><text class="tx" x="${ox-30}" y="${ay+4}">A</text><text class="tx" x="${ox+pw+18}" y="${ay+4}">A</text>`;
+  q+=`<rect x="${ox}" y="${ay-sc/2}" width="${ee}" height="${sc}" style="fill:var(--ac)"/><rect x="${ox+pw/2-sc/2}" y="${oy}" width="${sc}" height="${ee}" style="fill:var(--ac)"/>`;
+  q+=`<text class="tx" x="${ox}" y="${oy-10}">Planta: malla de la losa de fondo y aros de acero horizontal en muros</text><text class="tx" x="${ox}" y="${oy+ph+20}">${f(Lx)} × ${f(Bx)} m (exterior)</text>`;
+  const svg2=`<svg viewBox="0 0 ${pw+80} ${ph+50}" role="img" aria-label="Planta del tanque">${q}</svg>`;
+  const lg=[`Acero vertical muro (base): <b>${d.bv}</b> (ambas caras si se invierte el empuje)`,d.bvp&&`Acero vertical en el vano: <b>${d.bvp}</b>`,`Acero horizontal muro: <b>${d.bh}</b> por cara`,`Losa de fondo (ambas direcciones y caras): <b>${d.bf}</b>`,d.br&&`Tapa: <b>${d.br}</b> en ambas caras`].filter(Boolean);
+  const svg3=presiones(d);
+  $('dibujo').innerHTML=svg1+svg3+svg2+`<div class="lg">${lg.map(t=>`<span>${t}</span>`).join('')}</div><p class="note">Esquema indicativo, no a escala en los diámetros de las barras. Los rectángulos de color en la planta marcan la franja de 1 m de muro usada en los cálculos y en las presiones; el corte A-A pasa por los muros cortos. Los ganchos y las longitudes de desarrollo (NSR-10 C.12) deben detallarse en los planos estructurales.</p>`;
+}
+let QUIET=false;
+function auto(){
+  QUIET=true;let msg='No fue posible cumplir todo solo con estos ajustes: modifique volumen, altura o relación L/B, o mejore el suelo de fundación.';
+  for(let i=0;i<16;i++){
+    const c=run();if(!c)break;
+    const fail=c.filter(x=>!x[1]).map(x=>x[0]);
+    if(!fail.length){msg=i?'Se ajustaron las dimensiones hasta cumplir todas las verificaciones.':'Ya cumple todas las verificaciones.';break;}
+    const has=k=>fail.some(t=>t.startsWith(k));
+    const vo=parseFloat($('vo').value)||0;let ch=false;
+    if((has('Muro')||has('Tapa')||has('Losa'))&&['eM','eT','eF'].some(id=>$(id).value!=='')){['eM','eT','eF'].forEach(id=>$(id).value='');ch=true;}
+    if(!ch&&(has('Flotación')||has('Capacidad'))&&vo<3){$('vo').value=vo+0.25;ch=true;}
+    if(!ch&&has('Deslizamiento')&&window.LASTEF<1){$('eF').value=f(window.LASTEF+0.05);ch=true;}
+    if(!ch)break;
+  }
+  QUIET=false;run();$('msg').textContent=msg;
+}
+$('go').addEventListener('click',()=>{$('msg').textContent='';run();});$('re').addEventListener('click',()=>{$('msg').textContent='';run();});$('auto').addEventListener('click',auto);
+</script>
+<script>
+(function(){
+  if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+  const standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  if(standalone)return;
+  const box=document.getElementById('inst'),btn=document.getElementById('btnInst'),txt=document.getElementById('instTxt');
+  let ev=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;box.style.display='block';btn.style.display='inline-block';});
+  btn.addEventListener('click',async()=>{if(!ev)return;ev.prompt();await ev.userChoice;ev=null;box.style.display='none';});
+  addEventListener('appinstalled',()=>{box.style.display='none';});
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&location.protocol!=='file:'){
+    txt.textContent='En iPhone/iPad: toque el botón Compartir y elija "Agregar a pantalla de inicio".';box.style.display='block';
+  }
+})();
+</script>
+</body>
+</html>

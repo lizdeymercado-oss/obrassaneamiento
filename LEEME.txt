@@ -1,0 +1,32 @@
+APLICACIÓN INSTALABLE: DISEÑO DE TANQUES (NSR-10 / ACI 350)
+
+Es una PWA (aplicación web progresiva): se instala en celular o computador desde el
+navegador, tiene su propio ícono, abre en ventana propia y funciona SIN INTERNET.
+
+Para que el navegador permita instalarla, la carpeta debe estar publicada con HTTPS
+(abrir index.html con doble clic permite calcular, pero NO instalar).
+
+PASO 1. PUBLICAR (gratis, elija una opción; sin programar)
+  A) Netlify Drop: entre a https://app.netlify.com/drop y arrastre esta carpeta completa.
+     Le entrega un enlace https://....netlify.app
+  B) Cloudflare Pages o GitHub Pages: suba estos archivos a un repositorio y active Pages.
+  C) Prueba en su propio computador: en esta carpeta ejecute
+         python -m http.server 8000
+     y abra http://localhost:8000 (localhost sí permite instalar).
+
+PASO 2. INSTALAR
+  Android (Chrome):   abra el enlace > botón "Instalar en este dispositivo" o menú ⋮ >
+                      "Instalar aplicación".
+  iPhone/iPad (Safari): abra el enlace > Compartir > "Agregar a pantalla de inicio".
+  Windows/Mac/Linux (Chrome o Edge): ícono de instalar en la barra de direcciones, o el
+                      botón "Instalar en este dispositivo" de la aplicación.
+
+PASO 3 (opcional). ARCHIVO .APK / .EXE / TIENDAS
+  Con el enlace ya publicado, entre a https://www.pwabuilder.com, pegue la dirección y
+  descargue el paquete para Android (APK/AAB), Windows (MSIX) o iOS.
+
+ACTUALIZAR: reemplace los archivos publicados y cambie CACHE='tanques-v1' por
+'tanques-v2' en sw.js para que los dispositivos descarguen la nueva versión.
+
+ADVERTENCIA: resultado preliminar. Debe ser revisado y firmado por un ingeniero civil /
+estructural con matrícula profesional (Ley 400 de 1997).
